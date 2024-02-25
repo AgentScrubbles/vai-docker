@@ -20,6 +20,12 @@ build:    ## Build image capable of using fp16/32 models
 	--build-arg "VAI_SHA2=$(VAI_SHA2)" .
 	docker tag $(IMAGE) $(IMAGE):$(TAG)
 
+build-no-cache:    ## Build image capable of using fp16/32 models
+	docker build --no-cache -t $(IMAGE) \
+	--build-arg "VAI_VERSION=$(VAI_VERSION)" \
+	--build-arg "VAI_SHA2=$(VAI_SHA2)" .
+	docker tag $(IMAGE) $(IMAGE):$(TAG)
+
 login:    ## Refresh the auth.tpz license file
 	docker run --net=host --gpus all --rm -ti --user $(UID):$(GID) -v $(PWD)/auth:/auth --name topaz-login --hostname $(HOSTNAME) $(IMAGE) login
 
@@ -41,3 +47,10 @@ benchmark: ## Run a prob3 2x upscale benchmark
 		ffmpeg -v verbose -f lavfi -i testsrc=duration=60:size=640x480:rate=30 -pix_fmt yuv420p \
 		-filter_complex "tvai_up=model=prob-3:scale=2:preblur=-0.6:noise=0:details=1:halo=0.03:blur=1:compression=0:blend=0.8:device=0:vram=1:instances=1" \
 		-f null -
+
+push:
+	TAG=$(date '+%Y%m%d-%H%M')
+	docker tag topaz-vai git.apps.clabough.tech/third-party/vai-docker:$(TAG)
+	docker tag topaz-vai git.apps.clabough.tech/third-party/vai-docker:latest
+	docker push git.apps.clabough.tech/third-party/vai-docker:$(TAG)
+	docker push git.apps.clabough.tech/third-party/vai-docker:latest

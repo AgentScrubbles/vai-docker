@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM --platform=linux/amd64 nvidia/cuda:12.1.0-cudnn8-devel-ubuntu22.04
 
 # Tell the CUDA environment what GPU features to expose in the container.
 ENV NVIDIA_DRIVER_CAPABILITIES $NVIDIA_DRIVER_CAPABILITIES,video,graphics
@@ -32,8 +32,8 @@ RUN apt-get update && apt-get install -y \
  && rm -rf /var/lib/apt/lists/*
 
 # Version of VAI to build, can be overridden for `docker build` using '--build-arg`
-ARG VAI_VERSION=3.4.4.0.b
-ARG VAI_SHA2=607e1b9ad497a353f5efe901a1640a7fe1f9dc7445bbad16f86bf0969f5b9083
+ARG VAI_VERSION=4.0.7.0.b
+ARG VAI_SHA2=e8567bf60e1dec961cf4b471cd93c7ac63629ab49e97aac5b9e561409224d990
 
 ARG VAI_DIR=/opt/TopazVideoAIBETA
 ENV VAI_VERSION=${VAI_VERSION}
@@ -61,7 +61,13 @@ ENV TVAI_MODEL_DATA_DIR=/models \
     PATH=${VAI_DIR}/bin:${PATH}
 
 # Tip: volume mount this from the host to process files from outside the container.
+
+ENV FILTER tvai_up=model=prob-3:scale=2:preblur=-0.6:noise=0:details=1:halo=0.03:blur=1:compression=0:estimate=20:blend=0.8:device=0:vram=1:instances=1
+
 WORKDIR /workspace
 
-ENTRYPOINT ["/docker-init.sh"]
-CMD ["/bin/bash"]
+COPY run_ffmpeg.sh run_ffmpeg.sh
+
+# RUN chmod +x run_ffmpeg.sh
+
+CMD ["./run_ffmpeg.sh"]
